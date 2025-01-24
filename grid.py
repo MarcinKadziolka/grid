@@ -176,6 +176,8 @@ def create_unique_output_name():
         unique_str = str(uuid.uuid4())
     return unique_str
 
+def parse_value(config_line):
+    return config_line.split("<")[0].replace(" ", "")
 
 def objective(trial):
     optuna_values = {
@@ -185,10 +187,11 @@ def objective(trial):
 
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config,
                                     to_extract=["data_directory_path", "model_parameter_save_freq", "model_evaluation_freq"])
-    data_directory_path = extracted["data_directory_path"].split("<")[0].replace(" ", "")
+    data_directory_path = parse_value(extracted["data_directory_path"])
 
-    model_parameter_save_freq = int(extracted["model_parameter_save_freq"].split("<")[0].replace(" ", ""))
-    model_evaluation_freq = int(extracted["model_evaluation_freq"].split("<")[0].replace(" ", ""))
+    model_parameter_save_freq = int(parse_value(extracted["model_parameter_save_freq"]))
+    model_evaluation_freq = int(parse_value(extracted["model_evaluation_freq"]))
+
     assert model_evaluation_freq == model_parameter_save_freq, "model_parameter_save_freq must be the same as model model_evaluation_freq"
 
 
