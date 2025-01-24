@@ -115,6 +115,7 @@ def get_pid(name):
 
 def run_ray_splatting():
     windows_app_path = r"..\x64\Release\WindowsApp.exe"
+    assert os.path.exists(windows_app_path), f"Cannot find {windows_app_path}."
     subprocess.run([windows_app_path])
 
 def read_psnr_txt(filename):
@@ -193,7 +194,7 @@ def objective(trial):
     model_parameter_save_freq = int(parse_value(extracted["model_parameter_save_freq"]))
     model_evaluation_freq = int(parse_value(extracted["model_evaluation_freq"]))
 
-    assert model_evaluation_freq == model_parameter_save_freq, "model_parameter_save_freq must be the same as model model_evaluation_freq"
+    assert model_evaluation_freq == model_parameter_save_freq, "model_parameter_save_freq must be the same as model model_evaluation_freq."
 
 
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config, to_extract=["data_directory_path"])
