@@ -184,8 +184,12 @@ def objective(trial):
     current_config = read_config(config_name="config.txt")
 
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config,
-                                    to_extract=["data_directory_path"])
+                                    to_extract=["data_directory_path", "model_parameter_save_freq", "model_evaluation_freq"])
     data_directory_path = extracted["data_directory_path"].split("<")[0].replace(" ", "")
+
+    model_parameter_save_freq = int(extracted["model_parameter_save_freq"].split("<")[0].replace(" ", ""))
+    model_evaluation_freq = int(extracted["model_evaluation_freq"].split("<")[0].replace(" ", ""))
+    assert model_evaluation_freq == model_parameter_save_freq, "model_parameter_save_freq must be the same as model model_evaluation_freq"
 
 
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config, to_extract=["data_directory_path"])
