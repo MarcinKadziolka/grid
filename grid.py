@@ -187,7 +187,6 @@ def objective(trial):
                                     to_extract=["data_directory_path"])
     data_directory_path = extracted["data_directory_path"].split("<")[0].replace(" ", "")
 
-    current_config = read_config(config_name="config.txt")
 
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config, to_extract=["data_directory_path"])
     data_directory_path = extracted["data_directory_path"].split("<")[0].replace(" ", "")
