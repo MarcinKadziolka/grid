@@ -38,7 +38,6 @@ C:\Users\<username>\source\repos\WindowsApp\WindowsApp
 │   │   │   ├── <dataset_1>
 │   │   │   ├── <dataset_2>
 │   │   │   ├── <dataset_n>
-│   │   ├── x64\
        .
        .
        .
@@ -119,7 +118,7 @@ python3 grid.py
 ### Results
 Results are stored in the `<Blender data directory path (1)>` provided in the `config.txt`.
 
-Outputs will appear in the folder named `optuna`. Every run is saved under unique name. After the run the best psnr is checked.
+Outputs will appear in the folder named `optuna`. Every run is saved under unique name. After the run the best psnr from `PSNR_Test.txt` is checked.
 Then the following files are **moved** to the output folder:
 * `PSNR_Test.txt`
 * `PSNR_Train.txt`
