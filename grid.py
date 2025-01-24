@@ -7,7 +7,8 @@ from turtledemo.penrose import start
 import optuna
 import uuid
 import shutil
-
+from collections import namedtuple
+PSNR = namedtuple('PSNR', 'iter value')
 
 config_parameters = ["model_learning_phase",
                      "data_directory_path",
@@ -122,7 +123,7 @@ def read_psnr_txt(filename):
         all_lines = file.read().splitlines()
         for line in all_lines:
             iteration, psnr = line[:-1].split(": ")
-            iter_psnr.append((int(iteration), float(psnr)))
+            iter_psnr.append(PSNR(int(iteration), float(psnr)))
     return iter_psnr
 
 
@@ -202,11 +203,11 @@ def objective(trial):
     write_config(config=new_config, name="config.txt")
 
     run_ray_splatting()
-    best_psnr_iter, best_psnr = get_best_psnr("PSNR_Test.txt")
+    psnr = get_best_psnr("PSNR_Test.txt")
 
-    log_files(data_directory_path, best_psnr, best_psnr_iter)
+    log_files(data_directory_path, psnr.value, psnr.iter)
 
-    return best_psnr
+    return psnr.value
 
 
 study = optuna.create_study(direction="maximize")
