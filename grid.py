@@ -4,8 +4,25 @@ import optuna
 import uuid
 import shutil
 from collections import namedtuple
+import logging
+import pprint
+import warnings
+
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+
+logger.info('Started')
 
 PSNR = namedtuple('PSNR', 'iter value')
+
+SAVES_DIR = r".\dump\save"
 
 config_parameters = ["model_learning_phase",
                      "data_directory_path",
@@ -113,6 +130,7 @@ def get_pid(name):
 def run_ray_splatting():
     windows_app_path = r"..\x64\Release\WindowsApp.exe"
     assert os.path.exists(windows_app_path), f"Cannot find {windows_app_path}."
+    logger.info(f"Running ray splatting")
     subprocess.run([windows_app_path])
 
 def read_psnr_txt(filename):
@@ -140,33 +158,41 @@ def get_best_psnr(filename):
 
 def log_files(target_base_dir, best_psnr, best_psnr_iter):
 
-
     unique_name = create_unique_output_name()
     optuna_dir = os.path.join("./", target_base_dir, "optuna")
     os.makedirs(optuna_dir, exist_ok=True)
     with open(os.path.join(optuna_dir, "optuna_log.txt"), "a") as file:
         file.write(f"{unique_name}: {best_psnr}\n")
+
+
     target_dir = os.path.join(optuna_dir, unique_name)
     # prepare structure
     os.makedirs(target_dir, exist_ok=True)
-
+    logger.info(f"Set output logs directory to {target_dir}.")
 
 
     to_log = ["PSNR_test.txt", "PSNR_train.txt", "MSE_test.txt", "MSE_train.txt"]
     for file in to_log:
+        logger.info(f"Moving {file}")
         shutil.move(file, target_dir)
+        logger.info(f"Done")
 
+    logger.info(f"Copying config.txt")
     shutil.copy("config.txt", os.path.join(target_dir, "config.txt"))
+    logger.info(f"Done")
 
-    saves_dir = r".\dump\save"
     for file_type in ["GC", "m", "v"]:
         for i in range(1, 5):
             filename = f"{best_psnr_iter}.{file_type}{i}"
-            save_file_path = os.path.join(saves_dir, filename)
+            save_file_path = os.path.join(SAVES_DIR, filename)
+            logger.info(f"Moving {save_file_path}")
             shutil.move(save_file_path, target_dir)
+            logger.info(f"Done")
 
-    shutil.rmtree(saves_dir)
-    os.makedirs(saves_dir)
+    logger.info(f"Clearing {SAVES_DIR}")
+    shutil.rmtree(SAVES_DIR)
+    os.makedirs(SAVES_DIR)
+    logger.info(f"Done")
 
 def create_unique_output_name():
     if os.getenv('OAR_JOB_ID'):
@@ -178,10 +204,22 @@ def create_unique_output_name():
 def parse_value(config_line):
     return config_line.split("<")[0].replace(" ", "")
 
+
+
 def objective(trial):
+    if len(os.listdir(SAVES_DIR)) != 0:
+        warnings.warn(f"{SAVES_DIR} is not empty! This may corrupt your data.")
+
+
+
     optuna_values = {
-        "lr_gauss_rgb_components": trial.suggest_float('lr_gauss_rgb_components', 1e-5, 1e-2)
+        "lr_gauss_rgb_components": trial.suggest_float('lr_gauss_rgb_components', 1e-5, 1e-2),
+        "lr_gauss_alpha_component": trial.suggest_float('lr_gauss_alpha_component', 1e-5, 1e-2),
+        "lr_gauss_means": trial.suggest_float('lr_gauss_means', 1e-5, 1e-2),
     }
+
+    logger.info(f"Optuna values: \n{pprint.pformat(optuna_values)}")
+
     current_config = read_config(config_name="config.txt")
 
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config,
@@ -197,8 +235,11 @@ def objective(trial):
     extracted = extract_from_config(config_parameters=config_parameters, config=current_config, to_extract=["data_directory_path"])
     data_directory_path = extracted["data_directory_path"].split("<")[0].replace(" ", "")
 
+    logger.info(f"Data directory is set to: {data_directory_path}.")
+
     new_config = create_new_config(config_parameters=config_parameters, optuna_values=optuna_values, current_config=current_config)
     write_config(config=new_config, name="config.txt")
+
 
     run_ray_splatting()
     psnr = get_best_psnr("PSNR_Test.txt")
@@ -210,3 +251,5 @@ def objective(trial):
 
 study = optuna.create_study(direction="maximize")
 study.optimize(objective, n_trials=3)
+
+logger.info('Finished')
