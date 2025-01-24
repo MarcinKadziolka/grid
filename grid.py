@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
 import subprocess
-from itertools import zip_longest
 import os
-from turtledemo.penrose import start
-
 import optuna
 import uuid
 import shutil
 from collections import namedtuple
+
 PSNR = namedtuple('PSNR', 'iter value')
 
 config_parameters = ["model_learning_phase",
